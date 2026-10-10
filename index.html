@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="fi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ukulelen viritys ja harjoittelu</title>
+<style>
+:root{--bg:#fbf7ef;--fg:#2b2118;--card:#fff;--mut:#7a6a58;--acc:#d9822b;--ok:#2e9e5b;--bad:#c8473b;--line:#e4d9c6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1812;--fg:#f3e9da;--card:#2a231b;--mut:#a8977f;--line:#43392c}}
+:root[data-theme="dark"]{--bg:#1d1812;--fg:#f3e9da;--card:#2a231b;--mut:#a8977f;--line:#43392c}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.4}
+main{max-width:560px;margin:0 auto;padding:16px}
+h1{font-size:1.3rem;margin:4px 0 12px}
+.tabs{display:flex;gap:8px;margin-bottom:14px}
+button{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:pointer}
+button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.tabs button{flex:1;font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
+.strings{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.strings button{padding:10px 4px;text-align:center}
+.strings b{display:block;font-size:1.5rem}
+.strings small{color:var(--mut)}
+.strings button.on small{color:#fff}
+.strings button.ok{border-color:var(--ok);box-shadow:inset 0 0 0 2px var(--ok)}
+#status{text-align:center;font-size:1.15rem;font-weight:700;min-height:1.6em}
+#info{text-align:center;color:var(--mut);font-size:.9rem;min-height:1.3em}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hint{color:var(--mut);font-size:.9rem}
+.hidden{display:none}
+.chords{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chords button{padding:6px 10px}
+.big{display:flex;justify-content:center;gap:18px;align-items:flex-end}
+.beats{display:flex;justify-content:center;gap:10px;margin:10px 0}
+.beats span{width:40px;height:40px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-weight:700;color:var(--mut)}
+.beats span.on{background:var(--acc);border-color:var(--acc);color:#fff}
+input[type=range]{flex:1;min-width:120px}
+svg text{fill:var(--fg);font-family:inherit}
+</style></head><body><main>
+<h1>🎸 Konserttiukulele: viritys ja harjoittelu</h1>
+<div class="tabs"><button id="t1" class="on">Virityskone</button><button id="t2">Harjoittelu</button></div>
+
+<section id="p1">
+ <div class="card">
+  <svg viewBox="0 0 300 175" width="100%" role="img" aria-label="Virityksen mittari">
+   <path d="M30 150 A120 120 0 0 1 270 150" fill="none" stroke="var(--line)" stroke-width="14" stroke-linecap="round"/>
+   <path id="zone" fill="none" stroke="var(--ok)" stroke-width="14"/>
+   <g id="ticks"></g>
+   <text x="30" y="172" font-size="12" text-anchor="middle" fill="currentColor">−50</text>
+   <text x="150" y="172" font-size="12" text-anchor="middle">0</text>
+   <text x="270" y="172" font-size="12" text-anchor="middle">+50 ¢</text>
+   <line id="needle" x1="150" y1="150" x2="150" y2="48" stroke="var(--acc)" stroke-width="4" stroke-linecap="round" style="transform-origin:150px 150px"/>
+   <circle cx="150" cy="150" r="7" fill="var(--acc)"/>
+   <text id="note" x="150" y="118" font-size="40" font-weight="700" text-anchor="middle"></text>
+  </svg>
+  <div id="status">Valitse kieli tai paina Aloita kuuntelu</div>
+  <div id="info"></div>
+ </div>
+ <div class="card">
+  <div class="row" style="margin-bottom:10px">
+   <button id="mic" class="on">🎤 Aloita kuuntelu</button>
+   <button id="auto">Automaattinen kielentunnistus</button><button id="drone">🔊 Jatkuva sävel</button>
+  </div>
+  <div class="strings" id="strs"></div>
+  <p class="hint">Napauta kieltä: kuulet vertailusävelen ja mittari seuraa valittua kieltä. Soita yksi kieli kerrallaan avokielenä. Viritys on reentrantti: G on korkeampi kuin C.</p>
+ </div>
+</section>
+
+<section id="p2" class="hidden">
+ <div class="card">
+  <b>Sointu</b>
+  <div class="chords" id="chordBtns"></div>
+  <div class="big"><div id="cur"></div><div id="nxt" style="opacity:.55"></div></div>
+ </div>
+ <div class="card">
+  <b>Harjoitus: sointukierto + metronomi</b>
+  <div class="chords" id="progBtns"></div>
+  <div class="beats" id="beats"></div>
+  <div class="row"><span>Tempo</span><input type="range" id="bpm" min="40" max="140" value="60"><b id="bpmv">60</b></div>
+  <div class="row" style="margin-top:10px"><button id="go" class="on">▶ Käynnistä</button><span class="hint" id="pinfo"></span></div>
+  <p class="hint">Aloita perusiskulla ↓ ↓ ↓ ↓ (yksi isku per tahti), vaihda sointu joka neljännellä. Kun sujuu, kokeile ↓ ↓↑ ↑↓↑. Hidas ja tasainen voittaa nopean ja töksähtelevän.</p>
+ </div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let AC;const ctx=()=>AC||(AC=new (window.AudioContext||window.webkitAudioContext)());
+function tone(f,d=1.8,type="triangle",vol=.35,t0){const c=ctx(),o=c.createOscillator(),g=c.createGain(),t=t0||c.currentTime;o.type=type;o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(c.destination);o.start(t);o.stop(t+d+.05)}
+
+/* Tabs */
+function tab(n){$("p1").classList.toggle("hidden",n!=1);$("p2").classList.toggle("hidden",n!=2);$("t1").classList.toggle("on",n==1);$("t2").classList.toggle("on",n==2);if(n==1)stopMet()}
+$("t1").onclick=()=>tab(1);$("t2").onclick=()=>tab(2);
+
+/* Tuner */
+const S=[{n:"G",f:392.00},{n:"C",f:261.63},{n:"E",f:329.63},{n:"A",f:440.00}];
+let sel=null,an=null,buf=null,stream=null,cents=0,disp=0,hasSig=false,lastSig=0;
+const strs=$("strs");
+S.forEach((s,i)=>{const b=document.createElement("button");b.innerHTML=`<b>${s.n}</b><small>${s.n}4 · ${s.f.toFixed(0)} Hz</small>`;b.onclick=()=>{sel=i;if(dr)dr.o.frequency.setTargetAtTime(s.f,ctx().currentTime,.02);else tone(s.f);upd()};strs.appendChild(b)});
+$("auto").onclick=()=>{sel=null;upd()};
+let dr=null;
+$("drone").onclick=()=>{const c=ctx();if(c.state==="suspended")c.resume();if(dr){dr.g.gain.setTargetAtTime(0,c.currentTime,.05);dr.o.stop(c.currentTime+.3);dr=null;$("drone").classList.remove("on");return}
+ if(sel===null){$("status").textContent="Valitse ensin kieli";return}
+ const o=c.createOscillator(),g=c.createGain();o.type="triangle";o.frequency.value=S[sel].f;g.gain.value=.25;o.connect(g).connect(c.destination);o.start();dr={o,g};$("drone").classList.add("on")};
+function upd(){[...strs.children].forEach((b,i)=>b.classList.toggle("on",sel===i));$("auto").classList.toggle("on",sel===null)}
+upd();
+// ticks + green zone
+(function(){const P=(c,r)=>{const a=(-60+c*1.2)*Math.PI/180;return[150+r*Math.sin(a),150-r*Math.cos(a)]};let h="";for(let c=-50;c<=50;c+=10){const[a,b]=P(c,108),[d,e]=P(c,96);h+=`<line x1="${a}" y1="${b}" x2="${d}" y2="${e}" stroke="var(--mut)" stroke-width="${c%50==0||c==0?3:1.5}"/>`}$("ticks").innerHTML=h;const[x1,y1]=P(-5,120),[x2,y2]=P(5,120);$("zone").setAttribute("d",`M${x1} ${y1} A120 120 0 0 1 ${x2} ${y2}`)})();
+
+function detect(b,sr){let n=b.length,rms=0;for(let i=0;i<n;i++)rms+=b[i]*b[i];if(Math.sqrt(rms/n)<0.01)return -1;
+ let r1=0,r2=n-1,th=.2;for(let i=0;i<n/2;i++)if(Math.abs(b[i])<th){r1=i;break}for(let i=1;i<n/2;i++)if(Math.abs(b[n-i])<th){r2=n-i;break}
+ b=b.slice(r1,r2);n=b.length;if(n<100)return -1;const c=new Float32Array(n);
+ for(let i=0;i<n;i++)for(let j=0;j<n-i;j++)c[i]+=b[j]*b[j+i];
+ let d=0;while(d<n-2&&c[d]>c[d+1])d++;let mx=-1,mp=-1;for(let i=d;i<n;i++)if(c[i]>mx){mx=c[i];mp=i}
+ if(mp<1||mp>=n-1)return -1;let T=mp;const x1=c[T-1],x2=c[T],x3=c[T+1],a=(x1+x3-2*x2)/2,bb=(x3-x1)/2;if(a)T-=bb/(2*a);return sr/T}
+
+async function startMic(){
+ try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});}
+ catch(e){$("status").textContent="Mikrofoni ei ole käytettävissä tässä näkymässä";$("info").textContent="Virhe: "+(e&&e.name||"tuntematon")+". Käytä ⏺ Jatkuva sävel -tilaa ja virittele korvakuulolta.";return}
+ const c=ctx();if(c.state==="suspended")c.resume();
+ an=c.createAnalyser();an.fftSize=2048;buf=new Float32Array(2048);c.createMediaStreamSource(stream).connect(an);
+ $("mic").textContent="🎤 Kuuntelee…";$("mic").disabled=true;$("status").textContent="Näppäile kieltä";
+ setInterval(()=>{an.getFloatTimeDomainData(buf);const f=detect(buf,c.sampleRate);
+  if(f>150&&f<600){let i=sel;if(i===null){let best=1e9;S.forEach((s,k)=>{const d=Math.abs(1200*Math.log2(f/s.f));if(d<best){best=d;i=k}})}
+   const t=S[i];cents=Math.max(-60,Math.min(60,1200*Math.log2(f/t.f)));hasSig=true;lastSig=performance.now();
+   $("note").textContent=t.n;$("info").textContent=`${f.toFixed(1)} Hz → tavoite ${t.f.toFixed(1)} Hz (${cents>0?"+":""}${cents.toFixed(0)} ¢)`;
+   const ok=Math.abs(cents)<=5;$("status").style.color=ok?"var(--ok)":"var(--bad)";
+   $("status").textContent=ok?"✓ Vireessä":cents<0?"Liian matala: kiristä virettä":"Liian korkea: löysää virettä";
+   [...strs.children].forEach((b,k)=>b.classList.toggle("ok",ok&&k===i))}},100)}
+$("mic").onclick=startMic;
+(function loop(){if(hasSig&&performance.now()-lastSig>1500){hasSig=false;cents=0;$("note").textContent="";$("status").style.color="";$("status").textContent="Näppäile kieltä";[...strs.children].forEach(b=>b.classList.remove("ok"))}
+ disp+=(cents-disp)*.2;$("needle").style.transform=`rotate(${disp*1.2}deg)`;requestAnimationFrame(loop)})();
+
+/* Chords: fret per string G C E A */
+const CH={C:[0,0,0,3],Am:[2,0,0,0],F:[2,0,1,0],G:[0,2,3,2],G7:[0,2,1,2],C7:[0,0,0,1],Dm:[2,2,1,0],Em:[0,4,3,2]};
+function diagram(name,w=120){let s=`<svg viewBox="0 0 110 135" width="${w}"><text x="55" y="14" text-anchor="middle" font-size="16" font-weight="700">${name}</text>`;
+ const X=i=>20+i*23,Y=f=>34+f*22;
+ s+=`<line x1="20" y1="34" x2="89" y2="34" stroke="currentColor" stroke-width="5"/>`;
+ for(let f=1;f<=4;f++)s+=`<line x1="20" y1="${Y(f)}" x2="89" y2="${Y(f)}" stroke="var(--mut)" stroke-width="1.5"/>`;
+ "GCEA".split("").forEach((l,i)=>{s+=`<line x1="${X(i)}" y1="34" x2="${X(i)}" y2="${Y(4)}" stroke="var(--mut)" stroke-width="1.5"/><text x="${X(i)}" y="${Y(4)+16}" text-anchor="middle" font-size="11">${l}</text>`;
+  const f=CH[name][i];s+=f?`<circle cx="${X(i)}" cy="${Y(f)-11}" r="8" fill="var(--acc)"/>`:`<circle cx="${X(i)}" cy="28" r="0" />`;
+  if(!f)s+=`<circle cx="${X(i)}" cy="27" r="0"/>`});
+ return s+"</svg>"}
+let curChord="C";
+function showChord(n,next){curChord=n;$("cur").innerHTML=diagram(n,150);$("nxt").innerHTML=next?diagram(next,90):""}
+Object.keys(CH).forEach(n=>{const b=document.createElement("button");b.textContent=n;b.onclick=()=>{if(!run)showChord(n)};$("chordBtns").appendChild(b)});
+
+/* Practice */
+const PR=[["C","Am","F","G"],["C","F","G","C"],["Am","F","C","G"],["C","G","Am","F"]];
+let prog=PR[0],run=false,beat=0,ci=0,timer=null,nextT=0;
+PR.forEach((p,i)=>{const b=document.createElement("button");b.textContent=p.join(" – ");b.className=i?"":"on";b.onclick=()=>{prog=p;ci=0;[...$("progBtns").children].forEach((x,k)=>x.classList.toggle("on",k===i));if(!run)showChord(p[0],p[1])};$("progBtns").appendChild(b)});
+for(let i=1;i<=4;i++){const s=document.createElement("span");s.textContent=i;$("beats").appendChild(s)}
+$("bpm").oninput=e=>$("bpmv").textContent=e.target.value;
+showChord("C","Am");
+function tick(){const c=ctx(),spb=60/$("bpm").value;
+ while(nextT<c.currentTime+.15){tone(beat==0?1200:800,.06,"square",.12,nextT);
+  const bt=beat,cc=ci,at=nextT;
+  setTimeout(()=>{if(!run)return;[...$("beats").children].forEach((x,k)=>x.classList.toggle("on",k===bt));if(bt===0)showChord(prog[cc],prog[(cc+1)%4])},Math.max(0,(at-c.currentTime)*1000));
+  nextT+=spb;beat=(beat+1)%4;if(beat==0)ci=(ci+1)%4}}
+function stopMet(){run=false;clearInterval(timer);$("go").textContent="▶ Käynnistä";$("go").classList.add("on");[...$("beats").children].forEach(x=>x.classList.remove("on"))}
+$("go").onclick=()=>{if(run){stopMet();return}
+ const c=ctx();if(c.state==="suspended")c.resume();run=true;beat=0;ci=0;nextT=c.currentTime+.1;
+ $("go").textContent="■ Pysäytä";$("go").classList.remove("on");$("pinfo").textContent="Vaihda sointu ykkösiskulla";timer=setInterval(tick,25)};
+</script></body></html>
