@@ -105,20 +105,20 @@ upd();
 // ticks + green zone
 (function(){const P=(c,r)=>{const a=(-60+c*1.2)*Math.PI/180;return[150+r*Math.sin(a),150-r*Math.cos(a)]};let h="";for(let c=-50;c<=50;c+=10){const[a,b]=P(c,108),[d,e]=P(c,96);h+=`<line x1="${a}" y1="${b}" x2="${d}" y2="${e}" stroke="var(--mut)" stroke-width="${c%50==0||c==0?3:1.5}"/>`}$("ticks").innerHTML=h;const[x1,y1]=P(-5,120),[x2,y2]=P(5,120);$("zone").setAttribute("d",`M${x1} ${y1} A120 120 0 0 1 ${x2} ${y2}`)})();
 
-function detect(b,sr){let n=b.length,rms=0;for(let i=0;i<n;i++)rms+=b[i]*b[i];if(Math.sqrt(rms/n)<0.01)return -1;
+function detect(b,sr){let n=b.length,rms=0;for(let i=0;i<n;i++)rms+=b[i]*b[i];if(Math.sqrt(rms/n)<0.004)return -1;
  let r1=0,r2=n-1,th=.2;for(let i=0;i<n/2;i++)if(Math.abs(b[i])<th){r1=i;break}for(let i=1;i<n/2;i++)if(Math.abs(b[n-i])<th){r2=n-i;break}
  b=b.slice(r1,r2);n=b.length;if(n<100)return -1;const c=new Float32Array(n);
  for(let i=0;i<n;i++)for(let j=0;j<n-i;j++)c[i]+=b[j]*b[j+i];
  let d=0;while(d<n-2&&c[d]>c[d+1])d++;let mx=-1,mp=-1;for(let i=d;i<n;i++)if(c[i]>mx){mx=c[i];mp=i}
  if(mp<1||mp>=n-1)return -1;let T=mp;const x1=c[T-1],x2=c[T],x3=c[T+1],a=(x1+x3-2*x2)/2,bb=(x3-x1)/2;if(a)T-=bb/(2*a);return sr/T}
 
-async function startMic(){
+async function startMic(){ctx().resume();
  try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});}
  catch(e){$("status").textContent="Mikrofoni ei ole käytettävissä tässä näkymässä";$("info").textContent="Virhe: "+(e&&e.name||"tuntematon")+". Käytä ⏺ Jatkuva sävel -tilaa ja virittele korvakuulolta.";return}
  const c=ctx();if(c.state==="suspended")c.resume();
- an=c.createAnalyser();an.fftSize=2048;buf=new Float32Array(2048);c.createMediaStreamSource(stream).connect(an);
+ await c.resume();an=c.createAnalyser();an.fftSize=2048;buf=new Float32Array(2048);c.createMediaStreamSource(stream).connect(an);
  $("mic").textContent="🎤 Kuuntelee…";$("mic").disabled=true;$("status").textContent="Näppäile kieltä";
- setInterval(()=>{an.getFloatTimeDomainData(buf);const f=detect(buf,c.sampleRate);
+ setInterval(()=>{an.getFloatTimeDomainData(buf);let lv=0;for(let k=0;k<buf.length;k++)lv=Math.max(lv,Math.abs(buf[k]));if(!hasSig)$("info").textContent="Äänitaso: "+(lv*100).toFixed(0)+" % ("+c.state+")";const f=detect(buf,c.sampleRate);
   if(f>150&&f<600){let i=sel;if(i===null){let best=1e9;S.forEach((s,k)=>{const d=Math.abs(1200*Math.log2(f/s.f));if(d<best){best=d;i=k}})}
    const t=S[i];cents=Math.max(-60,Math.min(60,1200*Math.log2(f/t.f)));hasSig=true;lastSig=performance.now();
    $("note").textContent=t.n;$("info").textContent=`${f.toFixed(1)} Hz → tavoite ${t.f.toFixed(1)} Hz (${cents>0?"+":""}${cents.toFixed(0)} ¢)`;
